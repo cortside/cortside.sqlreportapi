@@ -4,7 +4,6 @@ declare @stateQueryId int
 declare @name nvarchar(50)
 
 set @name = 'spReport_Contractors'
-update ReportArgumentQuery set ArgQuery='select distinct a.St ID, a.St State from eboa.dbo.Contractor c join eboa.dbo.Address a on c.MailingAddressId=a.AddressID' where ReportArgumentQueryId=2
 exec @stateQueryId = spAddReportArgumentQuery 'select distinct a.St ID, a.St State from eboa.dbo.Contractor c join eboa.dbo.Address a on c.MailingAddressId=a.AddressID'
 
 set @reportGroupId = 1
@@ -13,20 +12,17 @@ exec @reportId = spAddReport @name, 'List Contractors', @reportGroupId
 	exec spAddReportArgument @reportId, 'End Date', '@enddate', 'DateTime', null, 2
 	exec spAddReportArgument @reportId, 'State', '@state', 'varchar(2)', @stateQueryId, 3
 
-update ReportArgument set ArgName='@state', ArgType='varchar(2)' where ReportArgumentId=6
+declare @policyQueryId int
+declare @roleQueryId int
+declare @permissionQueryId int
 
-delete from ReportArgumentQuery where ReportArgumentQueryId not in (select ReportArgumentQueryId from ReportArgument where ReportArgumentQueryId is not null)
+set @name = 'spReport_Policies'
+exec @policyQueryId = spAddReportArgumentQuery 'select distinct NormalizedName ID, Name from policyserver.dbo.Policies'
+exec @roleQueryId = spAddReportArgumentQuery 'select distinct NormalizedName ID, Name from policyserver.dbo.Roles'
+exec @permissionQueryId = spAddReportArgumentQuery 'select distinct NormalizedName ID, Name from policyserver.dbo.Permissions'
 
---select * from report
---select * from reportArgument
---select * from reportargumentquery
-
-
-
---select * from reportargumentquery
-
---update reportargumentquery set argquery='select distinct st ID, st Name from c1_qa_eboa.dbo.address where st is not null and st !=''  '' order by st'
-
-
---update reportargument set argname='@state' where reportargumentid=3
-
+set @reportGroupId = 1
+exec @reportId = spAddReport @name, 'List Policies', @reportGroupId
+	exec spAddReportArgument @reportId, 'Policy', '@policy', 'nvarchar(50)', @policyQueryId, 1
+	exec spAddReportArgument @reportId, 'Role', '@role', 'nvarchar(50)', @roleQueryId, 2
+	exec spAddReportArgument @reportId, 'Permission', '@permission', 'nvarchar(50)', @permissionQueryId, 3
